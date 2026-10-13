@@ -20,9 +20,14 @@ bool: single_op_bit_mode = true;     % global op bit selects add vs sub/double-n
 int: input_bw = 5;                   % bitwidth of the input
 int: coeff_bw = 6;                   % bitwidth for coefficients
 int: add1_output_bw = 4;             % signed bitwidth allowed for add1 output coefficients
+int: max_luts = 18;  % LUT6/LUT6_2 primitive cap
 
 % ----------------------------- inferred constants ---------------------------
 int: wire_bw = input_bw + coeff_bw;
+int: max_lut_width = wire_bw;
+int: min_input = -2^(input_bw - 1);
+int: max_input = 2^(input_bw - 1) - 1;
+include "../../../lut_count.mzn";
 % Each adder's effective coefficient uses bounds that preserve input_bw + w - 1
 % signed product bits: allow +2^(w - 1), but exclude -2^(w - 1).
 int: max_coeff = 2^(coeff_bw - 1);
@@ -275,6 +280,11 @@ constraint
     );
 
 constraint all_different(flat_coeff);
+
+% Cap the two generated adders by their actual output widths.
+constraint
+    output_lut_count(min(add1_output), max(add1_output)) +
+    output_lut_count(min(flat_coeff), max(flat_coeff)) <= max_luts;
 
 % ------------------------------ optional filters -----------------------------
 

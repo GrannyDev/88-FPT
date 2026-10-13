@@ -20,9 +20,15 @@ bool: single_op_bit_mode = true;     % global op bit selects add vs sub/double-n
 int: input_bw = 4;                   % bitwidth of the input
 int: coeff_bw = 5;                   % bitwidth for coefficients
 int: add1_output_bw = 3;             % signed bitwidth allowed for add1 output coefficients
+int: required_luts = 15;             % exact LUT6/LUT6_2 count of the two adders
 
 % ----------------------------- inferred constants ---------------------------
 int: wire_bw = input_bw + coeff_bw;
+
+int: max_lut_width = wire_bw;
+int: min_input = 0;
+int: max_input = 2^input_bw - 1;
+include "../../../lut_count.mzn";
 int: input_max = 2^input_bw - 1;
 int: max_coeff = (2^(input_bw + coeff_bw - 1) - 1) div input_max;
 int: min_coeff = -(2^(input_bw + coeff_bw - 1) div input_max);
@@ -274,6 +280,19 @@ constraint
     );
 
 constraint all_different(flat_coeff);
+
+% Keep only the coefficient sets whose stored VHDL has the requested LUT count.
+include "allowed_sets.mzn";
+array[FLAT] of var min_coeff..max_coeff: sorted_generated_coefficients = sort(flat_coeff);
+var ALLOWED_SETS: selected_target_set;
+constraint forall(i in FLAT)(
+    sorted_generated_coefficients[i] = allowed_coefficients[selected_target_set, i]
+);
+
+% Match the exact primitive count in the generated two-adder VHDL.
+constraint
+    output_lut_count(min(add1_output), max(add1_output)) +
+    output_lut_count(min(flat_coeff), max(flat_coeff)) = required_luts;
 
 % ------------------------------ optional filters -----------------------------
 

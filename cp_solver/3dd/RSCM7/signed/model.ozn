@@ -1,0 +1,9 @@
+output let {array [int] of string: X_INTRODUCED_1684_ = [("coeffs = "++show(coeffs_out))++"\n"]} in (X_INTRODUCED_1684_);
+set of int: ADD3_CASES = 1..4;
+set of int: RIGHT_ADD1_CASES = 1..4;
+set of int: LEFT_ADD1_CASES = 1..8;
+array [1..128] of int: X_INTRODUCED_141_;
+array [LEFT_ADD1_CASES,RIGHT_ADD1_CASES,ADD3_CASES] of int: coeff = array3d(1..8,1..4,1..4,X_INTRODUCED_141_);
+set of int: FLAT = 1..128;
+array [FLAT] of int: flat_coeff = array1d(coeff);
+array [FLAT] of int: coeffs_out = sort([fix(flat_coeff[i]) | i in FLAT]);

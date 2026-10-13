@@ -27,8 +27,13 @@ int: input_bw = 6;
 int: coeff_bw = 7;
 int: left_add1_output_bw = 4;
 int: right_add1_output_bw = 4;
+int: max_luts = 29;  % LUT6/LUT6_2 primitive cap
 
 % ----------------------------- inferred constants ---------------------------
+int: max_lut_width = input_bw + coeff_bw;
+int: min_input = -2^(input_bw - 1);
+int: max_input = 2^(input_bw - 1) - 1;
+include "../../../lut_count.mzn";
 % Each adder's effective coefficient uses bounds that preserve input_bw + w - 1
 % signed product bits: allow +2^(w - 1), but exclude -2^(w - 1).
 int: max_coeff = 2^(coeff_bw - 1);
@@ -244,13 +249,11 @@ constraint all_different(flat_coeff);
 
 % ------------------------------ optional filters -----------------------------
 
+% Cap all three generated adders by their actual output widths.
 constraint
-    (min(left_add1_output) >= -2^(left_add1_output_bw - 2) + 1 /\
-     max(left_add1_output) <= 2^(left_add1_output_bw - 2)) \/
-    (min(right_add1_output) >= -2^(right_add1_output_bw - 2) + 1 /\
-     max(right_add1_output) <= 2^(right_add1_output_bw - 2)) \/
-    (min(flat_coeff) >= -2^(coeff_bw - 2) + 1 /\
-     max(flat_coeff) <= 2^(coeff_bw - 2));
+    output_lut_count(min(left_add1_output), max(left_add1_output)) +
+    output_lut_count(min(right_add1_output), max(right_add1_output)) +
+    output_lut_count(min(flat_coeff), max(flat_coeff)) <= max_luts;
 
 constraint
     abs(max(flat_coeff) + min(flat_coeff)) <= 1;
